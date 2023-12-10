@@ -12,10 +12,11 @@ class Lander():
         self.acceleration = 0  # [m/s2]
         self.thrust = 0 # [N, kg*m/s2] thrust
         self.thrust_dir = 0 # TODO: [deg] thrust direction (0 = down)
-        self.telemetry = ['time,mass_total,pos_x,pos_y,speed_x,speed_y,speed_abs,mass_fuel,thrust,thrust_dir,acceleration']
+        self.touchdown = False  # [bool] True if lander touches ground
+        self.telemetry = ['time,mass_total,pos_x,pos_y,acceleration,speed_x,speed_y,speed_abs,mass_fuel,thrust,thrust_dir']
 
     def __str__(self):
-        return f'{self.name}, Mass {self.mass_total()} kg, Position ({self.pos_x}, {self.pos_y}) m, Speed {self.speed_absolute()} m/s'
+        return f'{self.name}, Mass {self.mass_total()} kg, Altitude {self.pos_y} m, Speed {self.speed_absolute()} m/s'
     
     # Gibt die absolute Geschwindigkeit des Landers zurück
     def speed_absolute(self) -> float:
@@ -25,16 +26,25 @@ class Lander():
     def mass_total(self) -> float:
         return self.mass_empty + self.mass_fuel
     
-    def set_altitude(self, alt: int = 1000):
+    def set_altitude(self, alt: int):
         self.pos_y = alt
 
-    def touchdown(self) -> bool:
+    def is_touchdown(self) -> bool:
         if self.pos_y <= 0:
             self.pos_y = 0
-            return True
-        else:
-            return False
+            self.touchdown = True
+        return self.touchdown
     
+    def telemetry_append(self, time: float = None):
+        tm_data = ','.join(map(str, [time, self.mass_total(), self.pos_x, self.pos_y, self.acceleration, self.speed_x, self.speed_y, self.speed_absolute(), self.mass_fuel, self.thrust, self.thrust_dir]))
+        self.telemetry.append(tm_data)
+    
+    def telemetry_save(self, file: str = 'lander_telemetry.csv'):
+        with open(file, 'w') as f:
+            for line in self.telemetry:
+                f.write(line + '\n')
+            f.close()
+
 class Planet():
     def __init__(self):
         self.name = 'Luna'  # [string] name of planet
@@ -53,6 +63,7 @@ class Planet():
 class PhysicsEngine:
     @staticmethod
     def descent(lander: Lander, planet: Planet, tick_sec: float = 1.0) -> float:
+        lander.acceleration = planet.gravity - lander.thrust / lander.mass_total()
         return lander.speed_y + 0.5 * lander.acceleration * tick_sec**2
 
 
@@ -64,18 +75,23 @@ if __name__ == '__main__':
     lander.acceleration = planet.gravity
     lander.set_altitude(10000)  # [m]
 
-    print(f'Planet: {planet}\nLander: {lander}\n')  # DEBUG: print planet and lander
+    print(f'Planet: {planet}\nLander: {lander}\n')  # DEBUG print planet and lander
  
-    while lander.touchdown() == False:
+    print(lander.telemetry[0])
+    while not lander.touchdown:
         lander.speed_y = PhysicsEngine.descent(lander, planet, planet.timetick)
         lander.pos_y -= lander.speed_y * planet.timetick
+        lander.is_touchdown()
+       
+        lander.telemetry_append(time)
+        print(lander.telemetry[-1])
+        
         lander.thrust = 0
-
         time += planet.timetick
- 
 
-'''
-#^ [1] Chat-GPT:
+    lander.telemetry_save()
+
+''' #^ [1] Chat-GPT:
 15264 kg - 8165 kg = 7099 kg (Masse des Landemoduls abzüglich Treibstoff Abstieg)
 7099 kg * (1.625 kg/m2 // 9.807 kg/m2) = 1176 kg (Masse Landemodul auf dem Mond)
 8165 kg * (1.625 kg/m2 // 9.807 kg/m2) = 1353 kg (Masse Abstieg-Treibstoff auf dem Mond)
