@@ -4,7 +4,7 @@ class LanderGame:
         self.ball_height = 100.0  # meters
         self.ball_velocity = 0.0 # meters per second
         self.timestep = 1.0  # seconds
-        self.gravitational_constant = 1.6
+        self.gravitational_constant = 1.6 # gravity moon
         self.running = True
 
     def update_timestep(self):
@@ -12,7 +12,7 @@ class LanderGame:
         accel_contribution = 0.5 * acceleration * self.timestep * self.timestep
         
         self.ball_height += self.ball_velocity * self.timestep
-        self.ball_velocity += acceleration * self.timestep
+        self.ball_velocity += accel_contribution * self.timestep
         
         print(f'Ball is at {self.ball_height:.3f} m with {self.ball_velocity:.1f} m/s.')
 
