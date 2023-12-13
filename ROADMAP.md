@@ -10,7 +10,7 @@
 - [ ] Balancing
 ### Diverses:
 - [x] Telemetrie-Daten sammeln
-- [ ] Klassen in eigene Files auslagern
+- [x] Klassen in eigene Files auslagern
 - [ ] Programmablauf optimieren
 ## Version 0.2: Lander 2D
 ### Planet:
